@@ -1,0 +1,49 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependency directories
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+frontend/dist-ssr/
+backend/target/
+
+# Runtime data
+backend/uploads/
+
+# Local environment files
+*.local
+.env
+.env.*
+!.env.example
+
+# IDE and OS files
+.claude/
+.vscode/*
+!frontend/.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Java / Maven local artifacts
+*.class
+hs_err_pid*
+replay_pid*
+.mvn/timing.properties
+
+# Frontend caches
+frontend/.vite/
+frontend/.eslintcache
+frontend/coverage/

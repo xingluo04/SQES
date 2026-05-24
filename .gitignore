@@ -47,3 +47,4 @@ replay_pid*
 frontend/.vite/
 frontend/.eslintcache
 frontend/coverage/
+tests/

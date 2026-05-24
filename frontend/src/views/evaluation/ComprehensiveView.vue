@@ -144,6 +144,7 @@
       </div>
       <template #footer>
         <el-button @click="detailVisible = false">关闭</el-button>
+        <el-button type="success" :disabled="!detailData" @click="handleExportReport">导出报告</el-button>
         <el-button type="primary" @click="showGrowth">查看成长趋势</el-button>
       </template>
     </el-dialog>
@@ -167,9 +168,11 @@ import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from
 import { CanvasRenderer } from 'echarts/renderers'
 import { getComprehensivePage, getComprehensiveDetail, getComprehensiveGrowth } from '@/api/evaluation'
 import { getClassList } from '@/api/class'
+import { printComprehensiveReport } from '@/utils/comprehensiveReport'
 import type { ComprehensiveEvaluation, EvaluationQuery } from '@/types/evaluation'
 import type { ClassInfo } from '@/types/class'
 import type { PageResult } from '@/types/api'
+import type { ComprehensiveSuggestion } from '@/utils/comprehensiveReport'
 
 use([RadarChart, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, CanvasRenderer])
 
@@ -193,7 +196,7 @@ const detailData = ref<ComprehensiveEvaluation | null>(null)
 const growthVisible = ref(false)
 const growthData = ref<ComprehensiveEvaluation[]>([])
 
-const suggestionData = computed(() => {
+const suggestionData = computed<ComprehensiveSuggestion | null>(() => {
   if (!detailData.value?.suggestion) return null
   try {
     return JSON.parse(detailData.value.suggestion)
@@ -298,6 +301,18 @@ async function showGrowth() {
   const res = await getComprehensiveGrowth(detailData.value.studentId) as unknown as { data: ComprehensiveEvaluation[] }
   growthData.value = Array.isArray(res.data) ? res.data : []
   growthVisible.value = true
+}
+
+function handleExportReport() {
+  if (!detailData.value) {
+    ElMessage.warning('暂无可导出的报告数据')
+    return
+  }
+
+  const opened = printComprehensiveReport(detailData.value, suggestionData.value)
+  if (!opened) {
+    ElMessage.error('浏览器拦截了报告窗口，请允许弹窗后重试')
+  }
 }
 
 onMounted(() => {

@@ -276,6 +276,29 @@ onMounted(loadData)
   .filter-time {
     width: 360px;
   }
+
+  :deep(.filter-time.el-date-editor) {
+    background-color: #1b2838;
+    border-color: #2a3a4a;
+    box-shadow: 0 0 0 1px #2a3a4a inset;
+  }
+
+  :deep(.filter-time.el-date-editor:hover) {
+    border-color: #4db6ac;
+    box-shadow: 0 0 0 1px #4db6ac inset;
+  }
+
+  :deep(.filter-time .el-range-input) {
+    color: #e8e0d8;
+    background-color: transparent;
+  }
+
+  :deep(.filter-time .el-range-input::placeholder),
+  :deep(.filter-time .el-range-separator),
+  :deep(.filter-time .el-range__icon),
+  :deep(.filter-time .el-range__close-icon) {
+    color: #9ca8b7;
+  }
 }
 
 .page-pagination {

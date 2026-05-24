@@ -52,15 +52,15 @@ public class StudentController {
     /* 新增学生信息 */
     @PostMapping
     public Result<?> add(@RequestBody StudentInfo studentInfo) {
-        studentService.save(studentInfo);
-        return Result.success();
+        boolean success = studentService.addStudent(studentInfo);
+        return success ? Result.success() : Result.error("学号已存在或账号冲突");
     }
 
     /* 修改学生信息 */
     @PutMapping
     public Result<?> update(@RequestBody StudentInfo studentInfo) {
-        studentService.updateById(studentInfo);
-        return Result.success();
+        boolean success = studentService.updateStudent(studentInfo);
+        return success ? Result.success() : Result.error("学生不存在、学号已存在或账号冲突");
     }
 
     /* 删除学生信息 */

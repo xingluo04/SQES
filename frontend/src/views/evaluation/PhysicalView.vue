@@ -16,7 +16,6 @@
       </div>
 
       <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="studentNo" label="学号" width="110" />
         <el-table-column prop="studentName" label="姓名" width="90" />
         <el-table-column prop="academicYear" label="学年" width="120" />
@@ -33,7 +32,6 @@
           </template>
         </el-table-column>
         <el-table-column prop="evaluatorName" label="评价人" width="90" />
-        <el-table-column prop="createTime" label="创建时间" width="170" />
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openDialog(row)">编辑</el-button>

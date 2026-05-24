@@ -15,7 +15,6 @@
       </div>
 
       <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="studentNo" label="学号" width="110" />
         <el-table-column prop="studentName" label="姓名" width="90" />
         <el-table-column prop="className" label="班级" width="130" />
@@ -160,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted } from 'vue'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { RadarChart, LineChart } from 'echarts/charts'

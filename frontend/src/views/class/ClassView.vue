@@ -22,7 +22,6 @@
       </div>
 
       <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="className" label="班级名称" width="160" />
         <el-table-column prop="grade" label="年级" width="100" />
         <el-table-column prop="department" label="院系" width="140" />

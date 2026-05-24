@@ -48,3 +48,6 @@ frontend/.vite/
 frontend/.eslintcache
 frontend/coverage/
 tests/
+uploads/
+*.err
+

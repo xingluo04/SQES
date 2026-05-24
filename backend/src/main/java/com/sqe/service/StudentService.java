@@ -31,6 +31,8 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
     private RoleService roleService;
     @Autowired
     private StudentParentRelationService parentRelationService;
+    @Autowired
+    private EvaluationService evaluationService;
 
     /* 分页查询学生 */
     public IPage<StudentInfo> pageList(int current, int size, String keyword, Long classId) {
@@ -118,8 +120,11 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
             return false;
         }
         boolean removed = this.removeById(id);
-        if (removed && studentInfo.getUserId() != null) {
+        if (removed) {
+            evaluationService.deleteByStudentId(id);
             parentRelationService.deleteByStudentId(id);
+        }
+        if (removed && studentInfo.getUserId() != null) {
             SysUser user = sysUserMapper.selectById(studentInfo.getUserId());
             if (user != null && "student".equals(roleService.getPrimaryRole(user.getId(), user.getRole()))) {
                 sysUserMapper.deleteById(user.getId());

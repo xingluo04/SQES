@@ -7,6 +7,7 @@ import com.sqe.entity.*;
 import com.sqe.mapper.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -190,4 +191,14 @@ public class EvaluationService {
     public void deletePhysical(Long id) { physicalMapper.deleteById(id); }
     public void deleteArt(Long id) { artMapper.deleteById(id); }
     public void deletePractice(Long id) { practiceMapper.deleteById(id); }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteByStudentId(Long studentId) {
+        moralMapper.delete(new LambdaQueryWrapper<MoralEvaluation>().eq(MoralEvaluation::getStudentId, studentId));
+        academicMapper.delete(new LambdaQueryWrapper<AcademicEvaluation>().eq(AcademicEvaluation::getStudentId, studentId));
+        physicalMapper.delete(new LambdaQueryWrapper<PhysicalEvaluation>().eq(PhysicalEvaluation::getStudentId, studentId));
+        artMapper.delete(new LambdaQueryWrapper<ArtEvaluation>().eq(ArtEvaluation::getStudentId, studentId));
+        practiceMapper.delete(new LambdaQueryWrapper<PracticeEvaluation>().eq(PracticeEvaluation::getStudentId, studentId));
+        comprehensiveMapper.delete(new LambdaQueryWrapper<ComprehensiveEvaluation>().eq(ComprehensiveEvaluation::getStudentId, studentId));
+    }
 }

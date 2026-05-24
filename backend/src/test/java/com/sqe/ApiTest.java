@@ -174,6 +174,59 @@ public class ApiTest {
                 .andExpect(jsonPath("$.data.records[0].realName").value("测试学生"));
     }
 
+    /* 删除学生时同步删除学生账号 */
+    @Test
+    @Order(32)
+    void testDeleteStudentRemovesStudentUser() throws Exception {
+        String studentNo = "2098" + System.currentTimeMillis();
+        createStudentForTest(studentNo, null);
+        JsonNode student = getFirstStudentByKeyword(studentNo);
+
+        mockMvc.perform(delete("/api/student/" + student.get("id").asLong())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        Assertions.assertEquals(0, getUserTotal(studentNo));
+        Assertions.assertEquals(0, getStudentTotal(studentNo));
+    }
+
+    /* 删除家长用户时解除学生家长绑定 */
+    @Test
+    @Order(33)
+    void testDeleteParentUserClearsStudentParentBinding() throws Exception {
+        String parentUsername = "parent" + System.currentTimeMillis();
+        String studentNo = "2097" + System.currentTimeMillis();
+        createUserForTest(parentUsername, "测试家长", "parent");
+        Long parentId = getFirstUserByKeyword(parentUsername).get("id").asLong();
+        createStudentForTest(studentNo, parentId);
+
+        mockMvc.perform(delete("/api/user/" + parentId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        JsonNode student = getFirstStudentByKeyword(studentNo);
+        Assertions.assertTrue(student.get("parentId") == null || student.get("parentId").isNull());
+    }
+
+    /* 删除学生用户时同步删除学生信息 */
+    @Test
+    @Order(34)
+    void testDeleteStudentUserRemovesStudentInfo() throws Exception {
+        String studentNo = "2096" + System.currentTimeMillis();
+        createStudentForTest(studentNo, null);
+        Long userId = getFirstStudentByKeyword(studentNo).get("userId").asLong();
+
+        mockMvc.perform(delete("/api/user/" + userId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        Assertions.assertEquals(0, getStudentTotal(studentNo));
+        Assertions.assertEquals(0, getUserTotal(studentNo));
+    }
+
     /* 品德评价分页测试 */
     @Test
     @Order(40)
@@ -347,5 +400,76 @@ public class ApiTest {
                 .andReturn();
         JsonNode data = mapper.readTree(result.getResponse().getContentAsString()).get("data");
         return data.get("total").asLong();
+    }
+
+    private void createStudentForTest(String studentNo, Long parentId) throws Exception {
+        String body = "{"
+                + "\"studentNo\":\"" + studentNo + "\","
+                + "\"realName\":\"测试学生\","
+                + "\"classId\":1,"
+                + "\"parentId\":" + (parentId == null ? "null" : parentId) + ","
+                + "\"gender\":1,"
+                + "\"enrollmentYear\":2099,"
+                + "\"phone\":\"13800000000\","
+                + "\"email\":\"student-test@example.com\""
+                + "}";
+        mockMvc.perform(post("/api/student")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    private void createUserForTest(String username, String realName, String role) throws Exception {
+        String body = "{"
+                + "\"username\":\"" + username + "\","
+                + "\"realName\":\"" + realName + "\","
+                + "\"role\":\"" + role + "\","
+                + "\"rawPassword\":\"123456\","
+                + "\"status\":1"
+                + "}";
+        mockMvc.perform(post("/api/user")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    private JsonNode getFirstStudentByKeyword(String keyword) throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/student/page?current=1&size=1&keyword=" + keyword)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+        return mapper.readTree(result.getResponse().getContentAsString()).get("data").get("records").get(0);
+    }
+
+    private JsonNode getFirstUserByKeyword(String keyword) throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/user/page?current=1&size=1&keyword=" + keyword)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+        return mapper.readTree(result.getResponse().getContentAsString()).get("data").get("records").get(0);
+    }
+
+    private long getStudentTotal(String keyword) throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/student/page?current=1&size=1&keyword=" + keyword)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+        return mapper.readTree(result.getResponse().getContentAsString()).get("data").get("total").asLong();
+    }
+
+    private long getUserTotal(String keyword) throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/user/page?current=1&size=1&keyword=" + keyword)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+        return mapper.readTree(result.getResponse().getContentAsString()).get("data").get("total").asLong();
     }
 }

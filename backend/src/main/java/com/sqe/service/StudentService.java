@@ -97,6 +97,23 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
         return this.updateById(studentInfo);
     }
 
+    /* 删除学生，同时删除对应学生账号 */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteStudent(Long id) {
+        StudentInfo studentInfo = this.getById(id);
+        if (studentInfo == null) {
+            return false;
+        }
+        boolean removed = this.removeById(id);
+        if (removed && studentInfo.getUserId() != null) {
+            SysUser user = sysUserMapper.selectById(studentInfo.getUserId());
+            if (user != null && "student".equals(user.getRole())) {
+                sysUserMapper.deleteById(user.getId());
+            }
+        }
+        return removed;
+    }
+
     /* 根据用户ID获取学生信息 */
     public StudentInfo getByUserId(Long userId) {
         return this.getOne(new LambdaQueryWrapper<StudentInfo>().eq(StudentInfo::getUserId, userId));

@@ -51,8 +51,8 @@ public class UserController {
     /* 删除用户 */
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
-        userService.removeById(id);
-        return Result.success();
+        boolean success = userService.deleteUser(id);
+        return success ? Result.success() : Result.error("用户不存在");
     }
 
     /* 重置密码 */

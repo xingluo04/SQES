@@ -66,7 +66,7 @@ public class StudentController {
     /* 删除学生信息 */
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
-        studentService.removeById(id);
-        return Result.success();
+        boolean success = studentService.deleteStudent(id);
+        return success ? Result.success() : Result.error("学生不存在");
     }
 }

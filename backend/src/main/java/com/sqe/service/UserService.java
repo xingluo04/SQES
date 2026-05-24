@@ -1,13 +1,17 @@
 package com.sqe.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.sqe.entity.StudentInfo;
 import com.sqe.entity.SysUser;
+import com.sqe.mapper.StudentInfoMapper;
 import com.sqe.mapper.SysUserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
@@ -18,6 +22,9 @@ public class UserService extends ServiceImpl<SysUserMapper, SysUser> {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private StudentInfoMapper studentInfoMapper;
 
     /* 分页查询用户 */
     public Page<SysUser> pageList(int current, int size, String keyword, String role) {
@@ -64,5 +71,23 @@ public class UserService extends ServiceImpl<SysUserMapper, SysUser> {
         user.setId(userId);
         user.setPassword(passwordEncoder.encode(newPassword));
         return this.updateById(user);
+    }
+
+    /* 删除用户，并处理角色关联数据 */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteUser(Long id) {
+        SysUser user = this.getById(id);
+        if (user == null) {
+            return false;
+        }
+        if ("student".equals(user.getRole())) {
+            studentInfoMapper.delete(new LambdaQueryWrapper<StudentInfo>().eq(StudentInfo::getUserId, id));
+        } else if ("parent".equals(user.getRole())) {
+            studentInfoMapper.update(null,
+                    new LambdaUpdateWrapper<StudentInfo>()
+                            .set(StudentInfo::getParentId, null)
+                            .eq(StudentInfo::getParentId, id));
+        }
+        return this.removeById(id);
     }
 }

@@ -27,6 +27,10 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleService roleService;
+    @Autowired
+    private StudentParentRelationService parentRelationService;
 
     /* 分页查询学生 */
     public IPage<StudentInfo> pageList(int current, int size, String keyword, Long classId) {
@@ -50,7 +54,7 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
             user.setPassword(passwordEncoder.encode("123456"));
             user.setRole("student");
             user.setStatus(1);
-        } else if (!"student".equals(user.getRole())) {
+        } else if (!"student".equals(roleService.getPrimaryRole(user.getId(), user.getRole()))) {
             return false;
         }
         fillUserFromStudent(user, studentInfo);
@@ -60,8 +64,13 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
         } else {
             sysUserMapper.updateById(user);
         }
+        roleService.syncSingleRole(user.getId(), "student");
         studentInfo.setUserId(user.getId());
-        return this.save(studentInfo);
+        boolean saved = this.save(studentInfo);
+        if (saved) {
+            parentRelationService.syncPrimaryParent(studentInfo.getId(), studentInfo.getParentId());
+        }
+        return saved;
     }
 
     /* 修改学生，同时同步用户基础资料 */
@@ -94,7 +103,11 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
                 sysUserMapper.updateById(user);
             }
         }
-        return this.updateById(studentInfo);
+        boolean updated = this.updateById(studentInfo);
+        if (updated) {
+            parentRelationService.syncPrimaryParent(studentInfo.getId(), studentInfo.getParentId());
+        }
+        return updated;
     }
 
     /* 删除学生，同时删除对应学生账号 */
@@ -106,8 +119,9 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
         }
         boolean removed = this.removeById(id);
         if (removed && studentInfo.getUserId() != null) {
+            parentRelationService.deleteByStudentId(id);
             SysUser user = sysUserMapper.selectById(studentInfo.getUserId());
-            if (user != null && "student".equals(user.getRole())) {
+            if (user != null && "student".equals(roleService.getPrimaryRole(user.getId(), user.getRole()))) {
                 sysUserMapper.deleteById(user.getId());
             }
         }
@@ -121,7 +135,13 @@ public class StudentService extends ServiceImpl<StudentInfoMapper, StudentInfo> 
 
     /* 根据家长ID获取关联学生 */
     public List<StudentInfo> getByParentId(Long parentId) {
-        return this.list(new LambdaQueryWrapper<StudentInfo>().eq(StudentInfo::getParentId, parentId));
+        List<Long> studentIds = parentRelationService.getStudentIdsByParentId(parentId);
+        LambdaQueryWrapper<StudentInfo> wrapper = new LambdaQueryWrapper<>();
+        if (!studentIds.isEmpty()) {
+            wrapper.in(StudentInfo::getId, studentIds).or();
+        }
+        wrapper.eq(StudentInfo::getParentId, parentId);
+        return this.list(wrapper);
     }
 
     /* 根据班级ID获取学生列表 */

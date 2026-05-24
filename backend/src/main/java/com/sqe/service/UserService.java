@@ -25,6 +25,10 @@ public class UserService extends ServiceImpl<SysUserMapper, SysUser> {
 
     @Autowired
     private StudentInfoMapper studentInfoMapper;
+    @Autowired
+    private RoleService roleService;
+    @Autowired
+    private StudentParentRelationService parentRelationService;
 
     /* 分页查询用户 */
     public Page<SysUser> pageList(int current, int size, String keyword, String role) {
@@ -37,7 +41,9 @@ public class UserService extends ServiceImpl<SysUserMapper, SysUser> {
             wrapper.eq(SysUser::getRole, role);
         }
         wrapper.orderByDesc(SysUser::getCreateTime);
-        return this.page(new Page<>(current, size), wrapper);
+        Page<SysUser> page = this.page(new Page<>(current, size), wrapper);
+        page.getRecords().forEach(this::fillRoles);
+        return page;
     }
 
     /* 新增用户 */
@@ -54,7 +60,12 @@ public class UserService extends ServiceImpl<SysUserMapper, SysUser> {
             user.setPassword(passwordEncoder.encode("123456"));
         }
         user.setStatus(1);
-        return this.save(user);
+        boolean saved = this.save(user);
+        if (saved) {
+            roleService.syncSingleRole(user.getId(), user.getRole());
+            fillRoles(user);
+        }
+        return saved;
     }
 
     /* 修改用户 */
@@ -62,7 +73,19 @@ public class UserService extends ServiceImpl<SysUserMapper, SysUser> {
         if (StringUtils.hasText(user.getRawPassword())) {
             user.setPassword(passwordEncoder.encode(user.getRawPassword()));
         }
-        return this.updateById(user);
+        boolean updated = this.updateById(user);
+        if (updated && StringUtils.hasText(user.getRole())) {
+            roleService.syncSingleRole(user.getId(), user.getRole());
+        }
+        return updated;
+    }
+
+    public SysUser getUserInfo(Long userId) {
+        SysUser user = this.getById(userId);
+        if (user != null) {
+            fillRoles(user);
+        }
+        return user;
     }
 
     /* 重置密码 */
@@ -80,14 +103,27 @@ public class UserService extends ServiceImpl<SysUserMapper, SysUser> {
         if (user == null) {
             return false;
         }
-        if ("student".equals(user.getRole())) {
+        String primaryRole = roleService.getPrimaryRole(user.getId(), user.getRole());
+        if ("student".equals(primaryRole)) {
+            StudentInfo student = studentInfoMapper.selectOne(
+                    new LambdaQueryWrapper<StudentInfo>().eq(StudentInfo::getUserId, id));
+            if (student != null) {
+                parentRelationService.deleteByStudentId(student.getId());
+            }
             studentInfoMapper.delete(new LambdaQueryWrapper<StudentInfo>().eq(StudentInfo::getUserId, id));
-        } else if ("parent".equals(user.getRole())) {
+        } else if ("parent".equals(primaryRole)) {
+            parentRelationService.deleteByParentId(id);
             studentInfoMapper.update(null,
                     new LambdaUpdateWrapper<StudentInfo>()
                             .set(StudentInfo::getParentId, null)
                             .eq(StudentInfo::getParentId, id));
         }
+        roleService.deleteUserRoles(id);
         return this.removeById(id);
+    }
+
+    private void fillRoles(SysUser user) {
+        user.setRoles(roleService.getRoleCodesByUserId(user.getId()));
+        user.setRole(roleService.resolvePrimaryRole(user.getRoles(), user.getRole()));
     }
 }

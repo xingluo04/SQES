@@ -13,8 +13,11 @@ DROP TABLE IF EXISTS academic_evaluation;
 DROP TABLE IF EXISTS moral_evaluation;
 DROP TABLE IF EXISTS sys_log;
 DROP TABLE IF EXISTS sys_notice;
+DROP TABLE IF EXISTS student_parent_relation;
 DROP TABLE IF EXISTS student_info;
 DROP TABLE IF EXISTS class_info;
+DROP TABLE IF EXISTS sys_user_role;
+DROP TABLE IF EXISTS sys_role;
 DROP TABLE IF EXISTS sys_user;
 
 -- 用户表
@@ -33,6 +36,30 @@ CREATE TABLE sys_user (
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_role (role)
 ) COMMENT '系统用户表';
+
+-- 角色表
+CREATE TABLE sys_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '角色ID',
+    role_code VARCHAR(20) NOT NULL UNIQUE COMMENT '角色编码：admin/teacher/student/parent',
+    role_name VARCHAR(50) NOT NULL COMMENT '角色名称',
+    description VARCHAR(255) COMMENT '角色说明',
+    status TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) COMMENT '系统角色表';
+
+-- 用户角色关系表
+CREATE TABLE sys_user_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关系ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_role (user_id, role_id),
+    INDEX idx_user (user_id),
+    INDEX idx_role (role_id),
+    CONSTRAINT fk_user_role_user FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_role_role FOREIGN KEY (role_id) REFERENCES sys_role(id) ON DELETE CASCADE
+) COMMENT '用户角色关系表';
 
 -- 班级表
 CREATE TABLE class_info (
@@ -58,6 +85,22 @@ CREATE TABLE student_info (
     INDEX idx_user (user_id),
     INDEX idx_class (class_id)
 ) COMMENT '学生信息表';
+
+-- 学生家长关系表
+CREATE TABLE student_parent_relation (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关系ID',
+    student_id BIGINT NOT NULL COMMENT '学生信息ID',
+    parent_user_id BIGINT NOT NULL COMMENT '家长用户ID',
+    relation_type VARCHAR(20) DEFAULT 'guardian' COMMENT '关系类型：father/mother/guardian/other',
+    is_primary_contact TINYINT DEFAULT 0 COMMENT '是否主要联系人：0-否，1-是',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_student_parent (student_id, parent_user_id),
+    INDEX idx_student (student_id),
+    INDEX idx_parent_user (parent_user_id),
+    CONSTRAINT fk_spr_student FOREIGN KEY (student_id) REFERENCES student_info(id) ON DELETE CASCADE,
+    CONSTRAINT fk_spr_parent_user FOREIGN KEY (parent_user_id) REFERENCES sys_user(id) ON DELETE CASCADE
+) COMMENT '学生家长关系表';
 
 -- 德育测评表（权重25%）
 CREATE TABLE moral_evaluation (
@@ -86,6 +129,7 @@ CREATE TABLE moral_evaluation (
     evaluator_id BIGINT COMMENT '评价人ID',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_student_year (student_id, academic_year),
     INDEX idx_student (student_id),
     INDEX idx_academic_year (academic_year)
 ) COMMENT '德育测评表';
@@ -108,6 +152,7 @@ CREATE TABLE academic_evaluation (
     evaluator_id BIGINT COMMENT '评价人ID',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_student_year (student_id, academic_year),
     INDEX idx_student (student_id),
     INDEX idx_academic_year (academic_year)
 ) COMMENT '智育测评表';
@@ -128,6 +173,7 @@ CREATE TABLE physical_evaluation (
     evaluator_id BIGINT COMMENT '评价人ID',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_student_year (student_id, academic_year),
     INDEX idx_student (student_id),
     INDEX idx_academic_year (academic_year)
 ) COMMENT '体育测评表';
@@ -148,6 +194,7 @@ CREATE TABLE art_evaluation (
     evaluator_id BIGINT COMMENT '评价人ID',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_student_year (student_id, academic_year),
     INDEX idx_student (student_id),
     INDEX idx_academic_year (academic_year)
 ) COMMENT '美育测评表';
@@ -168,6 +215,7 @@ CREATE TABLE practice_evaluation (
     evaluator_id BIGINT COMMENT '评价人ID',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_student_year (student_id, academic_year),
     INDEX idx_student (student_id),
     INDEX idx_academic_year (academic_year)
 ) COMMENT '劳动教育测评表';
@@ -198,6 +246,8 @@ CREATE TABLE cluster_result (
     academic_year VARCHAR(20) NOT NULL COMMENT '学年',
     cluster_count INT NOT NULL COMMENT '聚类数量',
     silhouette_score DECIMAL(5,4) COMMENT '轮廓系数',
+    davies_bouldin_index DECIMAL(8,4) COMMENT 'Davies-Bouldin指数(越低越好)',
+    calinski_harabasz_index DECIMAL(8,4) COMMENT 'Calinski-Harabasz指数(越高越好)',
     cluster_label INT NOT NULL COMMENT '聚类标签',
     cluster_name VARCHAR(50) COMMENT '聚类名称',
     student_count INT DEFAULT 0 COMMENT '该类学生数量',
@@ -208,6 +258,7 @@ CREATE TABLE cluster_result (
     avg_practice DECIMAL(5,2) DEFAULT 0 COMMENT '劳动教育平均分',
     description TEXT COMMENT '聚类描述',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_year_label (academic_year, cluster_label),
     INDEX idx_academic_year (academic_year)
 ) COMMENT '聚类分析结果表';
 
@@ -228,9 +279,13 @@ CREATE TABLE sys_log (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT,
     username VARCHAR(50),
+    module VARCHAR(50),
     operation VARCHAR(200),
     method VARCHAR(200),
     params TEXT,
     ip VARCHAR(50),
+    result VARCHAR(20),
+    error_msg VARCHAR(500),
+    cost_time BIGINT,
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '操作日志表';

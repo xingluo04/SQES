@@ -60,6 +60,14 @@ public class EvaluationService {
         BigDecimal total = sum.divide(BigDecimal.valueOf(3), 2, RoundingMode.HALF_UP)
                 .subtract(eval.getMoralDeduction());
         eval.setTotalScore(total.max(BigDecimal.ZERO));
+        if (eval.getId() == null) {
+            MoralEvaluation existing = moralMapper.selectOne(new LambdaQueryWrapper<MoralEvaluation>()
+                    .eq(MoralEvaluation::getStudentId, eval.getStudentId())
+                    .eq(MoralEvaluation::getAcademicYear, eval.getAcademicYear()));
+            if (existing != null) {
+                eval.setId(existing.getId());
+            }
+        }
         if (eval.getId() != null) moralMapper.updateById(eval);
         else moralMapper.insert(eval);
     }
@@ -78,6 +86,14 @@ public class EvaluationService {
         BigDecimal total = sum.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP)
                 .subtract(eval.getAcademicDeduction());
         eval.setTotalScore(total.max(BigDecimal.ZERO));
+        if (eval.getId() == null) {
+            AcademicEvaluation existing = academicMapper.selectOne(new LambdaQueryWrapper<AcademicEvaluation>()
+                    .eq(AcademicEvaluation::getStudentId, eval.getStudentId())
+                    .eq(AcademicEvaluation::getAcademicYear, eval.getAcademicYear()));
+            if (existing != null) {
+                eval.setId(existing.getId());
+            }
+        }
         if (eval.getId() != null) academicMapper.updateById(eval);
         else academicMapper.insert(eval);
     }
@@ -93,6 +109,14 @@ public class EvaluationService {
         BigDecimal total = sum.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP)
                 .subtract(eval.getPhysicalDeduction());
         eval.setTotalScore(total.max(BigDecimal.ZERO));
+        if (eval.getId() == null) {
+            PhysicalEvaluation existing = physicalMapper.selectOne(new LambdaQueryWrapper<PhysicalEvaluation>()
+                    .eq(PhysicalEvaluation::getStudentId, eval.getStudentId())
+                    .eq(PhysicalEvaluation::getAcademicYear, eval.getAcademicYear()));
+            if (existing != null) {
+                eval.setId(existing.getId());
+            }
+        }
         if (eval.getId() != null) physicalMapper.updateById(eval);
         else physicalMapper.insert(eval);
     }
@@ -108,6 +132,14 @@ public class EvaluationService {
         BigDecimal total = sum.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP)
                 .subtract(eval.getArtDeduction());
         eval.setTotalScore(total.max(BigDecimal.ZERO));
+        if (eval.getId() == null) {
+            ArtEvaluation existing = artMapper.selectOne(new LambdaQueryWrapper<ArtEvaluation>()
+                    .eq(ArtEvaluation::getStudentId, eval.getStudentId())
+                    .eq(ArtEvaluation::getAcademicYear, eval.getAcademicYear()));
+            if (existing != null) {
+                eval.setId(existing.getId());
+            }
+        }
         if (eval.getId() != null) artMapper.updateById(eval);
         else artMapper.insert(eval);
     }
@@ -123,6 +155,14 @@ public class EvaluationService {
         BigDecimal total = sum.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP)
                 .subtract(eval.getLaborDeduction());
         eval.setTotalScore(total.max(BigDecimal.ZERO));
+        if (eval.getId() == null) {
+            PracticeEvaluation existing = practiceMapper.selectOne(new LambdaQueryWrapper<PracticeEvaluation>()
+                    .eq(PracticeEvaluation::getStudentId, eval.getStudentId())
+                    .eq(PracticeEvaluation::getAcademicYear, eval.getAcademicYear()));
+            if (existing != null) {
+                eval.setId(existing.getId());
+            }
+        }
         if (eval.getId() != null) practiceMapper.updateById(eval);
         else practiceMapper.insert(eval);
     }

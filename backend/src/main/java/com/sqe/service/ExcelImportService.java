@@ -48,6 +48,8 @@ public class ExcelImportService {
     private ComprehensiveEvaluationMapper comprehensiveMapper;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleService roleService;
 
     /**
      * 导入Excel综测数据
@@ -122,6 +124,7 @@ public class ExcelImportService {
         user.setRole("student");
         user.setStatus(1);
         sysUserMapper.insert(user);
+        roleService.syncSingleRole(user.getId(), "student");
 
         StudentInfo student = new StudentInfo();
         student.setUserId(user.getId());

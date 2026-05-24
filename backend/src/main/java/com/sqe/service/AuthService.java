@@ -26,6 +26,8 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtUtils jwtUtils;
+    @Autowired
+    private RoleService roleService;
 
     /* 用户登录 */
     public Result<Map<String, Object>> login(LoginDTO dto) {
@@ -40,13 +42,15 @@ public class AuthService {
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             return Result.error("密码错误");
         }
-        String token = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());
+        String primaryRole = roleService.getPrimaryRole(user.getId(), user.getRole());
+        String token = jwtUtils.generateToken(user.getId(), user.getUsername(), primaryRole);
         Map<String, Object> data = new HashMap<>();
         data.put("token", token);
         data.put("userId", user.getId());
         data.put("username", user.getUsername());
         data.put("realName", user.getRealName());
-        data.put("role", user.getRole());
+        data.put("role", primaryRole);
+        data.put("roles", roleService.getRoleCodesByUserId(user.getId()));
         data.put("avatar", user.getAvatar());
         return Result.success(data);
     }
@@ -68,6 +72,7 @@ public class AuthService {
         user.setGender(dto.getGender());
         user.setStatus(1);
         userMapper.insert(user);
+        roleService.syncSingleRole(user.getId(), user.getRole());
         return Result.success("注册成功");
     }
 }

@@ -36,15 +36,15 @@ public class ClassController {
     /* 新增班级 */
     @PostMapping
     public Result<?> add(@RequestBody ClassInfo classInfo) {
-        classService.save(classInfo);
-        return Result.success();
+        boolean success = classService.saveClass(classInfo);
+        return success ? Result.success() : Result.error("班主任必须是教师用户");
     }
 
     /* 修改班级 */
     @PutMapping
     public Result<?> update(@RequestBody ClassInfo classInfo) {
-        classService.updateById(classInfo);
-        return Result.success();
+        boolean success = classService.updateClass(classInfo);
+        return success ? Result.success() : Result.error("班主任必须是教师用户");
     }
 
     /* 删除班级 */

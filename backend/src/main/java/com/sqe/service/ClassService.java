@@ -25,6 +25,8 @@ public class ClassService extends ServiceImpl<ClassInfoMapper, ClassInfo> {
     private SysUserMapper userMapper;
     @Autowired
     private StudentInfoMapper studentInfoMapper;
+    @Autowired
+    private RoleService roleService;
 
     /* 分页查询班级 */
     public Page<ClassInfo> pageList(int current, int size, String keyword) {
@@ -46,6 +48,20 @@ public class ClassService extends ServiceImpl<ClassInfoMapper, ClassInfo> {
         return list;
     }
 
+    public boolean saveClass(ClassInfo classInfo) {
+        if (!isTeacher(classInfo.getTeacherId())) {
+            return false;
+        }
+        return this.save(classInfo);
+    }
+
+    public boolean updateClass(ClassInfo classInfo) {
+        if (!isTeacher(classInfo.getTeacherId())) {
+            return false;
+        }
+        return this.updateById(classInfo);
+    }
+
     /* 填充额外信息 */
     private void fillExtraInfo(ClassInfo classInfo) {
         if (classInfo.getTeacherId() != null) {
@@ -57,5 +73,13 @@ public class ClassService extends ServiceImpl<ClassInfoMapper, ClassInfo> {
         Long count = studentInfoMapper.selectCount(
                 new LambdaQueryWrapper<StudentInfo>().eq(StudentInfo::getClassId, classInfo.getId()));
         classInfo.setStudentCount(count.intValue());
+    }
+
+    private boolean isTeacher(Long teacherId) {
+        if (teacherId == null) {
+            return true;
+        }
+        SysUser teacher = userMapper.selectById(teacherId);
+        return teacher != null && "teacher".equals(roleService.getPrimaryRole(teacher.getId(), teacher.getRole()));
     }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 系统用户实体
@@ -31,4 +32,8 @@ public class SysUser {
     /* 非数据库字段，用于接收密码参数 */
     @TableField(exist = false)
     private String rawPassword;
+
+    /* 非数据库字段，用于返回或接收多角色 */
+    @TableField(exist = false)
+    private List<String> roles;
 }

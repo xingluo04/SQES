@@ -31,7 +31,7 @@ public class UserController {
     @GetMapping("/info")
     public Result<SysUser> info(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        return Result.success(userService.getById(userId));
+        return Result.success(userService.getUserInfo(userId));
     }
 
     /* 新增用户 */

@@ -51,7 +51,6 @@
       </div>
 
       <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="module" label="模块" width="110" />
         <el-table-column prop="username" label="操作人" width="100" />
         <el-table-column prop="operation" label="操作内容" min-width="200" show-overflow-tooltip />

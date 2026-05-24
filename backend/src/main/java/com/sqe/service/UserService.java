@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.sqe.dto.PasswordUpdateDTO;
+import com.sqe.dto.ProfileUpdateDTO;
 import com.sqe.entity.StudentInfo;
 import com.sqe.entity.SysUser;
 import com.sqe.mapper.StudentInfoMapper;
@@ -86,6 +88,36 @@ public class UserService extends ServiceImpl<SysUserMapper, SysUser> {
             fillRoles(user);
         }
         return user;
+    }
+
+    /* 当前用户修改个人资料 */
+    public boolean updateProfile(Long userId, ProfileUpdateDTO dto) {
+        SysUser user = new SysUser();
+        user.setId(userId);
+        user.setRealName(dto.getRealName());
+        user.setGender(dto.getGender());
+        user.setPhone(dto.getPhone());
+        user.setEmail(dto.getEmail());
+        user.setAvatar(dto.getAvatar());
+        return this.updateById(user);
+    }
+
+    /* 当前用户修改密码 */
+    public boolean updatePassword(Long userId, PasswordUpdateDTO dto) {
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new IllegalArgumentException("两次输入的新密码不一致");
+        }
+        SysUser existing = this.getById(userId);
+        if (existing == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+        if (!passwordEncoder.matches(dto.getOldPassword(), existing.getPassword())) {
+            throw new IllegalArgumentException("旧密码错误");
+        }
+        SysUser user = new SysUser();
+        user.setId(userId);
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        return this.updateById(user);
     }
 
     /* 重置密码 */

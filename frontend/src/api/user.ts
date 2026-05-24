@@ -1,6 +1,6 @@
 import request from './request'
 import type { ApiResponse, PageResult, PageQuery } from '@/types/api'
-import type { User } from '@/types/user'
+import type { PasswordUpdateRequest, ProfileUpdateRequest, User } from '@/types/user'
 
 export function getUserPage(params: PageQuery & { role?: string }) {
   return request.get<ApiResponse<PageResult<User>>>('/user/page', { params })
@@ -24,4 +24,12 @@ export function resetPassword(id: number) {
 
 export function changeStatus(id: number, status: number) {
   return request.put<ApiResponse<string>>(`/user/status/${id}/${status}`)
+}
+
+export function updateProfile(data: ProfileUpdateRequest) {
+  return request.put<ApiResponse<string>>('/user/profile', data)
+}
+
+export function updatePassword(data: PasswordUpdateRequest) {
+  return request.put<ApiResponse<string>>('/user/password', data)
 }

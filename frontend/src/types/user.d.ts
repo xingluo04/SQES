@@ -35,3 +35,17 @@ export interface RegisterRequest {
   email?: string
   gender?: number
 }
+
+export interface ProfileUpdateRequest {
+  realName: string
+  gender: number
+  phone: string
+  email: string
+  avatar: string
+}
+
+export interface PasswordUpdateRequest {
+  oldPassword: string
+  newPassword: string
+  confirmPassword: string
+}

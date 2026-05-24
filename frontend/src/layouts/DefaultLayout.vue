@@ -99,6 +99,7 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
                 <el-dropdown-item command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -155,7 +156,9 @@ onMounted(async () => {
 })
 
 function handleCommand(cmd: string) {
-  if (cmd === 'logout') {
+  if (cmd === 'profile') {
+    router.push('/profile')
+  } else if (cmd === 'logout') {
     userStore.logout()
     router.push('/login')
   }

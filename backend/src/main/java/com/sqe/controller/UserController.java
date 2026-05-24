@@ -2,11 +2,15 @@ package com.sqe.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sqe.common.Result;
+import com.sqe.dto.PasswordUpdateDTO;
+import com.sqe.dto.ProfileUpdateDTO;
 import com.sqe.entity.SysUser;
 import com.sqe.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 /**
  * 用户管理控制器
@@ -32,6 +36,22 @@ public class UserController {
     public Result<SysUser> info(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         return Result.success(userService.getUserInfo(userId));
+    }
+
+    /* 修改当前登录用户个人资料 */
+    @PutMapping("/profile")
+    public Result<?> updateProfile(Authentication authentication, @RequestBody ProfileUpdateDTO dto) {
+        Long userId = (Long) authentication.getPrincipal();
+        userService.updateProfile(userId, dto);
+        return Result.success();
+    }
+
+    /* 修改当前登录用户密码 */
+    @PutMapping("/password")
+    public Result<?> updatePassword(Authentication authentication, @Valid @RequestBody PasswordUpdateDTO dto) {
+        Long userId = (Long) authentication.getPrincipal();
+        userService.updatePassword(userId, dto);
+        return Result.success();
     }
 
     /* 新增用户 */
